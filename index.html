@@ -1,0 +1,1413 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CityWatch - Civic Issue Reporter</title>
+    <meta name="theme-color" content="#2c3e50">
+    <meta name="description" content="Report civic issues with automatic geotagging">
+    
+    <!-- PWA -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="CityWatch">
+    <link rel="apple-touch-icon" href="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTkyIiBoZWlnaHQ9IjE5MiIgdmlld0JveD0iMCAwIDE5MiAxOTIiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3Qgd2lkdGg9IjE5MiIgaGVpZ2h0PSIxOTIiIHJ4PSI0MCIgZmlsbD0iIzM0OThkQiIvPjxwYXRoIGQ9Ik05NiA1MEM4OC4yODA1IDUwIDgyIDU2LjI4MDUgODIgNjRTODguMjgwNSA3OCA5NiA3OFMxMTAgNzEuNzE5NSAxMTAgNjRTMTAzLjcxOSA1MCA5NiA1MFpNOTYgMTQyQzExOC4wOTEgMTQyIDEzNiAxMjQuMDkxIDEzNiAxMDJIMTU2QzE1NiAxMzAuODQgMTMyLjg0IDE1NCAxMDQgMTU0SDg4QzU5LjE2MCAxNTQgMzYgMTMwLjg0IDM2IDEwMkg1NkM1NiAxMjQuMDkxIDczLjkwOSAxNDIgOTYgMTQyWiIgZmlsbD0id2hpdGUiLz48L3N2Zz4=">
+    <link rel="manifest" id="app-manifest">
+    
+    <!-- Styles -->
+    <style>
+        /* Base Styles */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        :root {
+            --primary: #3498db;
+            --secondary: #2c3e50;
+            --accent: #e74c3c;
+            --success: #27ae60;
+            --warning: #f39c12;
+            --light: #ecf0f1;
+            --dark: #2c3e50;
+            --text: #333;
+            --text-light: #7f8c8d;
+            --shadow: 0 4px 12px rgba(0,0,0,0.1);
+            --radius: 12px;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: var(--light);
+            color: var(--text);
+            line-height: 1.6;
+            overflow-x: hidden;
+            padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+        }
+        
+        /* App Layout */
+        #app {
+            max-width: 100%;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        /* Header */
+        .app-header {
+            background: var(--secondary);
+            color: white;
+            padding: 1rem;
+            box-shadow: var(--shadow);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .app-title {
+            font-size: 1.5rem;
+            font-weight: bold;
+        }
+        
+        .user-badge {
+            background: var(--primary);
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-size: 0.9rem;
+        }
+        
+        /* Navigation */
+        .app-nav {
+            display: flex;
+            background: white;
+            border-bottom: 1px solid #ddd;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+        
+        .nav-item {
+            padding: 1rem;
+            white-space: nowrap;
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s;
+        }
+        
+        .nav-item.active {
+            border-bottom-color: var(--primary);
+            color: var(--primary);
+            font-weight: bold;
+        }
+        
+        /* Main Content */
+        .app-content {
+            flex: 1;
+            padding: 1rem;
+            overflow-y: auto;
+        }
+        
+        .page {
+            display: none;
+            animation: fadeIn 0.3s ease;
+        }
+        
+        .page.active {
+            display: block;
+        }
+        
+        /* Cards */
+        .card {
+            background: white;
+            border-radius: var(--radius);
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            box-shadow: var(--shadow);
+        }
+        
+        /* Buttons */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem 1.5rem;
+            border: none;
+            border-radius: var(--radius);
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            min-height: 44px;
+        }
+        
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+        
+        .btn-secondary {
+            background: var(--secondary);
+            color: white;
+        }
+        
+        .btn-accent {
+            background: var(--accent);
+            color: white;
+        }
+        
+        .btn-success {
+            background: var(--success);
+            color: white;
+        }
+        
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+        
+        /* Forms */
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+        
+        .form-label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            color: var(--dark);
+        }
+        
+        .form-input, .form-select, .form-textarea {
+            width: 100%;
+            padding: 1rem;
+            border: 2px solid #ddd;
+            border-radius: var(--radius);
+            font-size: 1rem;
+            transition: border-color 0.3s;
+        }
+        
+        .form-input:focus, .form-select:focus, .form-textarea:focus {
+            border-color: var(--primary);
+            outline: none;
+        }
+        
+        /* Map */
+        #map-container {
+            height: 300px;
+            border-radius: var(--radius);
+            overflow: hidden;
+            margin-bottom: 1rem;
+        }
+        
+        /* Camera */
+        .camera-container {
+            position: relative;
+            margin-bottom: 1rem;
+        }
+        
+        #camera-preview {
+            width: 100%;
+            height: 300px;
+            background: #ddd;
+            border-radius: var(--radius);
+            object-fit: cover;
+        }
+        
+        .camera-controls {
+            position: absolute;
+            bottom: 1rem;
+            left: 0;
+            right: 0;
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+        }
+        
+        /* Issue List */
+        .issues-list {
+            display: grid;
+            gap: 1rem;
+        }
+        
+        .issue-card {
+            background: white;
+            border-radius: var(--radius);
+            padding: 1.5rem;
+            box-shadow: var(--shadow);
+            transition: transform 0.3s;
+        }
+        
+        .issue-card:active {
+            transform: scale(0.98);
+        }
+        
+        .issue-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+        
+        .issue-type {
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: bold;
+            color: white;
+        }
+        
+        .issue-status {
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: bold;
+            color: white;
+        }
+        
+        .issue-image {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+            border-radius: var(--radius);
+            margin-bottom: 1rem;
+        }
+        
+        /* Admin */
+        .admin-panel {
+            background: white;
+            border-radius: var(--radius);
+            padding: 1.5rem;
+            box-shadow: var(--shadow);
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+        
+        .stat-card {
+            background: var(--light);
+            padding: 1rem;
+            border-radius: var(--radius);
+            text-align: center;
+        }
+        
+        .stat-value {
+            font-size: 2rem;
+            font-weight: bold;
+            color: var(--primary);
+        }
+        
+        /* Animations */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+        
+        @keyframes slideIn {
+            from { transform: translateX(-100%); }
+            to { transform: translateX(0); }
+        }
+        
+        .animate-pulse {
+            animation: pulse 2s infinite;
+        }
+        
+        /* Loading */
+        .loading {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 2rem;
+        }
+        
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid var(--primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        /* Responsive */
+        @media (max-width: 768px) {
+            .app-header {
+                padding: 0.75rem;
+            }
+            
+            .app-title {
+                font-size: 1.25rem;
+            }
+            
+            .card {
+                padding: 1rem;
+            }
+            
+            .btn {
+                padding: 0.875rem 1.25rem;
+            }
+        }
+        
+        /* Utility */
+        .text-center { text-align: center; }
+        .mb-1 { margin-bottom: 1rem; }
+        .mb-2 { margin-bottom: 2rem; }
+        .mt-1 { margin-top: 1rem; }
+        .mt-2 { margin-top: 2rem; }
+        .hidden { display: none; }
+        
+        /* PWA specific */
+        .pwa-mode .app-header {
+            padding-top: calc(1rem + env(safe-area-inset-top));
+        }
+    </style>
+    
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+</head>
+<body>
+    <div id="app">
+        <!-- Header -->
+        <header class="app-header">
+            <h1 class="app-title">CityWatch</h1>
+            <div class="user-badge" id="user-badge">Guest</div>
+        </header>
+        
+        <!-- Navigation -->
+        <nav class="app-nav">
+            <div class="nav-item active" data-page="home">Home</div>
+            <div class="nav-item" data-page="report">Report Issue</div>
+            <div class="nav-item" data-page="issues">My Reports</div>
+            <div class="nav-item" data-page="admin" id="admin-nav" style="display:none;">Admin</div>
+            <div class="nav-item" data-page="login" id="login-nav">Login</div>
+        </nav>
+        
+        <!-- Main Content -->
+        <main class="app-content">
+            <!-- Home Page -->
+            <div id="home-page" class="page active">
+                <div class="card">
+                    <h2 class="text-center mb-1">Report Civic Issues</h2>
+                    <p class="text-center mb-2">Help make your community better by reporting issues like potholes, broken streetlights, and more.</p>
+                    <button class="btn btn-primary" style="width:100%" data-page="report">Report an Issue</button>
+                </div>
+                
+                <div class="card">
+                    <h3 class="mb-1">Recent Issues Near You</h3>
+                    <div id="map-container">
+                        <!-- Map will be loaded here -->
+                    </div>
+                    <div class="loading">
+                        <div class="spinner"></div>
+                    </div>
+                </div>
+                
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-value" id="total-issues">0</div>
+                        <div>Total Issues</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="resolved-issues">0</div>
+                        <div>Resolved</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="active-issues">0</div>
+                        <div>Active</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Report Issue Page -->
+            <div id="report-page" class="page">
+                <div class="card">
+                    <h2 class="mb-1">Report New Issue</h2>
+                    <form id="issue-form">
+                        <div class="form-group">
+                            <label class="form-label">Issue Type</label>
+                            <select class="form-select" id="issue-type" required>
+                                <option value="">Select issue type</option>
+                                <option value="pothole">Pothole</option>
+                                <option value="streetlight">Malfunctioning Streetlight</option>
+                                <option value="trash">Overflowing Trash Bin</option>
+                                <option value="graffiti">Graffiti</option>
+                                <option value="water_leak">Water Leak</option>
+                                <option value="other">Other</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label">Title</label>
+                            <input type="text" class="form-input" id="issue-title" placeholder="Brief description" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label">Description</label>
+                            <textarea class="form-textarea" id="issue-description" rows="3" placeholder="Provide more details..."></textarea>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label">Photo Evidence (Automatically Geotagged)</label>
+                            <div class="camera-container">
+                                <video id="camera-preview" autoplay playsinline></video>
+                                <div class="camera-controls">
+                                    <button type="button" class="btn btn-accent" id="capture-btn">Capture Photo</button>
+                                </div>
+                            </div>
+                            <canvas id="photo-canvas" class="hidden"></canvas>
+                            <img id="photo-preview" class="hidden" style="width:100%; border-radius:var(--radius); margin-top:1rem;">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label">Location</label>
+                            <div id="location-status">Acquiring location...</div>
+                            <input type="hidden" id="latitude">
+                            <input type="hidden" id="longitude">
+                            <input type="hidden" id="accuracy">
+                        </div>
+                        
+                        <button type="submit" class="btn btn-primary" style="width:100%">Submit Report</button>
+                    </form>
+                </div>
+            </div>
+            
+            <!-- My Issues Page -->
+            <div id="issues-page" class="page">
+                <div class="card">
+                    <h2 class="mb-1">My Reported Issues</h2>
+                    <div class="form-group">
+                        <select class="form-select" id="filter-status">
+                            <option value="">All Statuses</option>
+                            <option value="reported">Reported</option>
+                            <option value="acknowledged">Acknowledged</option>
+                            <option value="in_progress">In Progress</option>
+                            <option value="resolved">Resolved</option>
+                        </select>
+                    </div>
+                    
+                    <div id="issues-list" class="issues-list">
+                        <div class="loading">
+                            <div class="spinner"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Admin Page -->
+            <div id="admin-page" class="page">
+                <div class="card">
+                    <h2 class="mb-1">Administrator Dashboard</h2>
+                    
+                    <div class="admin-panel">
+                        <h3 class="mb-1">System Overview</h3>
+                        <div class="stats-grid">
+                            <div class="stat-card">
+                                <div class="stat-value" id="admin-total">0</div>
+                                <div>Total Reports</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-value" id="admin-pending">0</div>
+                                <div>Pending</div>
+                            </div>
+                            <div class="stat-value" id="admin-resolved">0</div>
+                            <div>Resolved</div>
+                        </div>
+                        
+                        <h3 class="mb-1">All Reported Issues</h3>
+                        <div class="form-group">
+                            <input type="text" class="form-input" id="admin-search" placeholder="Search issues...">
+                        </div>
+                        
+                        <div id="admin-issues-list" class="issues-list">
+                            <div class="loading">
+                                <div class="spinner"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Login Page -->
+            <div id="login-page" class="page">
+                <div class="card">
+                    <h2 class="text-center mb-2">Login to CityWatch</h2>
+                    
+                    <div id="citizen-login">
+                        <form id="login-form">
+                            <div class="form-group">
+                                <label class="form-label">Email</label>
+                                <input type="email" class="form-input" id="login-email" placeholder="Your email" required>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label class="form-label">Password</label>
+                                <input type="password" class="form-input" id="login-password" placeholder="Your password" required>
+                            </div>
+                            
+                            <button type="submit" class="btn btn-primary" style="width:100%">Login</button>
+                        </form>
+                        
+                        <p class="text-center mt-1">Don't have an account? <a href="#" id="show-register">Register</a></p>
+                        <p class="text-center mt-1">Are you an administrator? <a href="#" id="show-admin-login">Admin Login</a></p>
+                    </div>
+                    
+                    <div id="admin-login" class="hidden">
+                        <form id="admin-login-form">
+                            <div class="form-group">
+                                <label class="form-label">Admin ID</label>
+                                <input type="text" class="form-input" id="admin-id" placeholder="Your government ID" required>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label class="form-label">Department</label>
+                                <select class="form-select" id="admin-department" required>
+                                    <option value="">Select department</option>
+                                    <option value="public_works">Public Works</option>
+                                    <option value="sanitation">Sanitation</option>
+                                    <option value="transportation">Transportation</option>
+                                    <option value="parks">Parks & Recreation</option>
+                                </select>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label class="form-label">Security Code</label>
+                                <input type="password" class="form-input" id="admin-code" placeholder="Your security code" required>
+                            </div>
+                            
+                            <button type="submit" class="btn btn-secondary" style="width:100%">Admin Login</button>
+                        </form>
+                        
+                        <p class="text-center mt-1">Are you a citizen? <a href="#" id="show-citizen-login">Citizen Login</a></p>
+                    </div>
+                    
+                    <div id="register-form" class="hidden">
+                        <form id="register-form">
+                            <div class="form-group">
+                                <label class="form-label">Full Name</label>
+                                <input type="text" class="form-input" id="register-name" placeholder="Your full name" required>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label class="form-label">Email</label>
+                                <input type="email" class="form-input" id="register-email" placeholder="Your email" required>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label class="form-label">Password</label>
+                                <input type="password" class="form-input" id="register-password" placeholder="Create a password" required>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label class="form-label">Confirm Password</label>
+                                <input type="password" class="form-input" id="register-confirm" placeholder="Confirm your password" required>
+                            </div>
+                            
+                            <button type="submit" class="btn btn-primary" style="width:100%">Register</button>
+                        </form>
+                        
+                        <p class="text-center mt-1">Already have an account? <a href="#" id="show-login">Login</a></p>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+    
+    <script>
+        // App configuration
+        const API_BASE_URL = 'https://your-render-app.onrender.com'; // Change to your Render URL
+        
+        // Global state
+        let currentUser = null;
+        let userLocation = null;
+        let map = null;
+        let stream = null;
+        let capturedPhoto = null;
+        let photoLocation = null;
+        
+        // Initialize the app
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeApp();
+        });
+        
+        function initializeApp() {
+            setupNavigation();
+            setupAuthentication();
+            setupForms();
+            setupCamera();
+            setupGeolocation();
+            checkAuthStatus();
+            loadStats();
+            
+            // Setup PWA
+            setupPWA();
+        }
+        
+        // Navigation
+        function setupNavigation() {
+            const navItems = document.querySelectorAll('.nav-item');
+            navItems.forEach(item => {
+                item.addEventListener('click', function() {
+                    // Update active state
+                    navItems.forEach(i => i.classList.remove('active'));
+                    this.classList.add('active');
+                    
+                    // Show the corresponding page
+                    const pageId = this.getAttribute('data-page');
+                    showPage(pageId);
+                });
+            });
+            
+            // Button navigation
+            document.querySelectorAll('[data-page]').forEach(btn => {
+                if (btn.tagName === 'BUTTON') {
+                    btn.addEventListener('click', function() {
+                        const pageId = this.getAttribute('data-page');
+                        document.querySelectorAll('.nav-item').forEach(item => {
+                            item.classList.remove('active');
+                            if (item.getAttribute('data-page') === pageId) {
+                                item.classList.add('active');
+                            }
+                        });
+                        showPage(pageId);
+                    });
+                }
+            });
+        }
+        
+        function showPage(pageId) {
+            // Hide all pages
+            document.querySelectorAll('.page').forEach(page => {
+                page.classList.remove('active');
+            });
+            
+            // Show selected page
+            document.getElementById(`${pageId}-page`).classList.add('active');
+            
+            // Page-specific initialization
+            switch(pageId) {
+                case 'home':
+                    initializeMap();
+                    break;
+                case 'issues':
+                    loadUserIssues();
+                    break;
+                case 'admin':
+                    if (currentUser && currentUser.role === 'admin') {
+                        loadAdminData();
+                    }
+                    break;
+            }
+        }
+        
+        // Authentication
+        function setupAuthentication() {
+            // Login form
+            document.getElementById('login-form').addEventListener('submit', function(e) {
+                e.preventDefault();
+                const email = document.getElementById('login-email').value;
+                const password = document.getElementById('login-password').value;
+                loginUser(email, password);
+            });
+            
+            // Admin login form
+            document.getElementById('admin-login-form').addEventListener('submit', function(e) {
+                e.preventDefault();
+                const adminId = document.getElementById('admin-id').value;
+                const department = document.getElementById('admin-department').value;
+                const code = document.getElementById('admin-code').value;
+                loginAdmin(adminId, department, code);
+            });
+            
+            // Register form
+            document.getElementById('register-form').addEventListener('submit', function(e) {
+                e.preventDefault();
+                const name = document.getElementById('register-name').value;
+                const email = document.getElementById('register-email').value;
+                const password = document.getElementById('register-password').value;
+                const confirm = document.getElementById('register-confirm').value;
+                
+                if (password !== confirm) {
+                    alert('Passwords do not match');
+                    return;
+                }
+                
+                registerUser(name, email, password);
+            });
+            
+            // Auth navigation
+            document.getElementById('show-admin-login').addEventListener('click', function(e) {
+                e.preventDefault();
+                document.getElementById('citizen-login').classList.add('hidden');
+                document.getElementById('admin-login').classList.remove('hidden');
+                document.getElementById('register-form').classList.add('hidden');
+            });
+            
+            document.getElementById('show-citizen-login').addEventListener('click', function(e) {
+                e.preventDefault();
+                document.getElementById('admin-login').classList.add('hidden');
+                document.getElementById('citizen-login').classList.remove('hidden');
+                document.getElementById('register-form').classList.add('hidden');
+            });
+            
+            document.getElementById('show-register').addEventListener('click', function(e) {
+                e.preventDefault();
+                document.getElementById('citizen-login').classList.add('hidden');
+                document.getElementById('admin-login').classList.add('hidden');
+                document.getElementById('register-form').classList.remove('hidden');
+            });
+            
+            document.getElementById('show-login').addEventListener('click', function(e) {
+                e.preventDefault();
+                document.getElementById('register-form').classList.add('hidden');
+                document.getElementById('admin-login').classList.add('hidden');
+                document.getElementById('citizen-login').classList.remove('hidden');
+            });
+        }
+        
+        function checkAuthStatus() {
+            const savedUser = localStorage.getItem('currentUser');
+            if (savedUser) {
+                currentUser = JSON.parse(savedUser);
+                updateUIForAuth();
+            }
+        }
+        
+        function updateUIForAuth() {
+            const userBadge = document.getElementById('user-badge');
+            const adminNav = document.getElementById('admin-nav');
+            const loginNav = document.getElementById('login-nav');
+            
+            if (currentUser) {
+                userBadge.textContent = currentUser.name;
+                loginNav.textContent = 'Logout';
+                
+                if (currentUser.role === 'admin') {
+                    adminNav.style.display = 'block';
+                } else {
+                    adminNav.style.display = 'none';
+                }
+            } else {
+                userBadge.textContent = 'Guest';
+                adminNav.style.display = 'none';
+                loginNav.textContent = 'Login';
+            }
+        }
+        
+        function loginUser(email, password) {
+            fetch(`${API_BASE_URL}/api/login`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ email, password })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    alert(data.error);
+                    return;
+                }
+                
+                currentUser = data.user;
+                localStorage.setItem('currentUser', JSON.stringify(currentUser));
+                updateUIForAuth();
+                showPage('home');
+            })
+            .catch(error => {
+                console.error('Login error:', error);
+                alert('Login failed. Please try again.');
+            });
+        }
+        
+        function loginAdmin(adminId, department, code) {
+            // For demo purposes - in a real app, this would verify against a secure backend
+            if (adminId === 'admin123' && code === 'secure2024') {
+                currentUser = {
+                    id: 1,
+                    name: 'Administrator',
+                    email: 'admin@city.gov',
+                    role: 'admin',
+                    department: department
+                };
+                
+                localStorage.setItem('currentUser', JSON.stringify(currentUser));
+                updateUIForAuth();
+                showPage('admin');
+            } else {
+                alert('Invalid admin credentials');
+            }
+        }
+        
+        function registerUser(name, email, password) {
+            fetch(`${API_BASE_URL}/api/register`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ name, email, password })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    alert(data.error);
+                    return;
+                }
+                
+                alert('Registration successful! Please login.');
+                document.getElementById('show-login').click();
+            })
+            .catch(error => {
+                console.error('Registration error:', error);
+                alert('Registration failed. Please try again.');
+            });
+        }
+        
+        function logoutUser() {
+            currentUser = null;
+            localStorage.removeItem('currentUser');
+            updateUIForAuth();
+            showPage('home');
+        }
+        
+        // Camera and Geolocation
+        function setupCamera() {
+            const captureBtn = document.getElementById('capture-btn');
+            const video = document.getElementById('camera-preview');
+            const canvas = document.getElementById('photo-canvas');
+            const preview = document.getElementById('photo-preview');
+            
+            captureBtn.addEventListener('click', function() {
+                if (!stream) {
+                    alert('Camera not ready. Please allow camera access.');
+                    return;
+                }
+                
+                // Capture photo
+                const context = canvas.getContext('2d');
+                canvas.width = video.videoWidth;
+                canvas.height = video.videoHeight;
+                context.drawImage(video, 0, 0, canvas.width, canvas.height);
+                
+                // Convert to data URL
+                capturedPhoto = canvas.toDataURL('image/jpeg');
+                preview.src = capturedPhoto;
+                preview.classList.remove('hidden');
+                
+                // Store location at time of capture
+                photoLocation = {...userLocation};
+                
+                alert('Photo captured with geotagging!');
+            });
+            
+            // Initialize camera when report page is shown
+            document.getElementById('report-page').addEventListener('click', function() {
+                initializeCamera();
+            });
+        }
+        
+        function initializeCamera() {
+            if (stream) return;
+            
+            const video = document.getElementById('camera-preview');
+            
+            navigator.mediaDevices.getUserMedia({ video: true, audio: false })
+            .then(function(cameraStream) {
+                stream = cameraStream;
+                video.srcObject = stream;
+            })
+            .catch(function(error) {
+                console.error('Camera error:', error);
+                alert('Unable to access camera. Please check permissions.');
+            });
+        }
+        
+        function stopCamera() {
+            if (stream) {
+                stream.getTracks().forEach(track => track.stop());
+                stream = null;
+            }
+        }
+        
+        function setupGeolocation() {
+            if (!navigator.geolocation) {
+                document.getElementById('location-status').textContent = 'Geolocation not supported';
+                return;
+            }
+            
+            // Watch user position
+            navigator.geolocation.watchPosition(
+                function(position) {
+                    userLocation = {
+                        latitude: position.coords.latitude,
+                        longitude: position.coords.longitude,
+                        accuracy: position.coords.accuracy
+                    };
+                    
+                    document.getElementById('location-status').textContent = 
+                        `Location acquired (Accuracy: ${Math.round(userLocation.accuracy)}m)`;
+                    
+                    document.getElementById('latitude').value = userLocation.latitude;
+                    document.getElementById('longitude').value = userLocation.longitude;
+                    document.getElementById('accuracy').value = userLocation.accuracy;
+                    
+                    // Update map if it exists
+                    if (map) {
+                        map.setView([userLocation.latitude, userLocation.longitude], 15);
+                    }
+                },
+                function(error) {
+                    console.error('Geolocation error:', error);
+                    document.getElementById('location-status').textContent = 'Unable to get location';
+                },
+                { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+            );
+        }
+        
+        // Map
+        function initializeMap() {
+            if (map) return;
+            
+            const mapContainer = document.getElementById('map-container');
+            mapContainer.innerHTML = ''; // Clear loading indicator
+            
+            // Create map
+            map = L.map('map-container').setView([0, 0], 2);
+            
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '&copy; OpenStreetMap contributors'
+            }).addTo(map);
+            
+            // Add user location if available
+            if (userLocation) {
+                map.setView([userLocation.latitude, userLocation.longitude], 15);
+                L.marker([userLocation.latitude, userLocation.longitude])
+                    .addTo(map)
+                    .bindPopup('Your location')
+                    .openPopup();
+            }
+            
+            // Load issues on map
+            loadMapIssues();
+        }
+        
+        function loadMapIssues() {
+            fetch(`${API_BASE_URL}/api/issues`)
+            .then(response => response.json())
+            .then(data => {
+                displayIssuesOnMap(data.issues);
+            })
+            .catch(error => {
+                console.error('Error loading issues:', error);
+            });
+        }
+        
+        function displayIssuesOnMap(issues) {
+            if (!map) return;
+            
+            // Clear existing markers
+            map.eachLayer(layer => {
+                if (layer instanceof L.Marker) {
+                    map.removeLayer(layer);
+                }
+            });
+            
+            // Add issue markers
+            issues.forEach(issue => {
+                const marker = L.marker([issue.latitude, issue.longitude]).addTo(map);
+                
+                let statusColor;
+                switch(issue.status) {
+                    case 'reported': statusColor = '#e74c3c'; break;
+                    case 'acknowledged': statusColor = '#f39c12'; break;
+                    case 'in_progress': statusColor = '#3498db'; break;
+                    case 'resolved': statusColor = '#27ae60'; break;
+                    default: statusColor = '#7f8c8d';
+                }
+                
+                // Create custom icon
+                const icon = L.divIcon({
+                    className: 'custom-marker',
+                    html: `<div style="background-color: ${statusColor}; width: 12px; height: 12px; border-radius: 50%; border: 2px solid white;"></div>`,
+                    iconSize: [16, 16],
+                    iconAnchor: [8, 8]
+                });
+                
+                marker.setIcon(icon);
+                
+                marker.bindPopup(`
+                    <strong>${issue.title}</strong><br>
+                    Type: ${issue.issue_type}<br>
+                    Status: ${issue.status}<br>
+                    <button onclick="viewIssue(${issue.id})">View Details</button>
+                `);
+            });
+        }
+        
+        // Forms
+        function setupForms() {
+            // Issue form
+            document.getElementById('issue-form').addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                if (!currentUser) {
+                    alert('Please login to report an issue');
+                    showPage('login');
+                    return;
+                }
+                
+                if (!capturedPhoto) {
+                    alert('Please capture a photo first');
+                    return;
+                }
+                
+                submitIssue();
+            });
+            
+            // Filter form
+            document.getElementById('filter-status').addEventListener('change', loadUserIssues);
+            
+            // Admin search
+            document.getElementById('admin-search').addEventListener('input', debounce(function() {
+                loadAdminData();
+            }, 300));
+        }
+        
+        function submitIssue() {
+            const formData = new FormData();
+            formData.append('title', document.getElementById('issue-title').value);
+            formData.append('description', document.getElementById('issue-description').value);
+            formData.append('issue_type', document.getElementById('issue-type').value);
+            formData.append('latitude', photoLocation.latitude);
+            formData.append('longitude', photoLocation.longitude);
+            formData.append('accuracy', photoLocation.accuracy);
+            formData.append('user_id', currentUser.id);
+            
+            // Convert data URL to blob
+            fetch(capturedPhoto)
+                .then(res => res.blob())
+                .then(blob => {
+                    formData.append('image', blob, 'issue-photo.jpg');
+                    
+                    return fetch(`${API_BASE_URL}/api/issues`, {
+                        method: 'POST',
+                        body: formData
+                    });
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.error) {
+                        alert(data.error);
+                        return;
+                    }
+                    
+                    alert('Issue reported successfully!');
+                    resetIssueForm();
+                    showPage('home');
+                })
+                .catch(error => {
+                    console.error('Error reporting issue:', error);
+                    alert('Failed to report issue. Please try again.');
+                });
+        }
+        
+        function resetIssueForm() {
+            document.getElementById('issue-form').reset();
+            document.getElementById('photo-preview').classList.add('hidden');
+            capturedPhoto = null;
+            photoLocation = null;
+            stopCamera();
+        }
+        
+        // Data loading
+        function loadStats() {
+            fetch(`${API_BASE_URL}/api/issues`)
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('total-issues').textContent = data.total;
+                
+                const resolvedCount = data.issues.filter(issue => issue.status === 'resolved').length;
+                document.getElementById('resolved-issues').textContent = resolvedCount;
+                document.getElementById('active-issues').textContent = data.total - resolvedCount;
+            })
+            .catch(error => {
+                console.error('Error loading stats:', error);
+            });
+        }
+        
+        function loadUserIssues() {
+            if (!currentUser) {
+                document.getElementById('issues-list').innerHTML = '<p>Please login to view your issues</p>';
+                return;
+            }
+            
+            const statusFilter = document.getElementById('filter-status').value;
+            let url = `${API_BASE_URL}/api/issues?user_id=${currentUser.id}`;
+            if (statusFilter) url += `&status=${statusFilter}`;
+            
+            fetch(url)
+            .then(response => response.json())
+            .then(data => {
+                displayUserIssues(data.issues);
+            })
+            .catch(error => {
+                console.error('Error loading user issues:', error);
+            });
+        }
+        
+        function displayUserIssues(issues) {
+            const issuesList = document.getElementById('issues-list');
+            
+            if (issues.length === 0) {
+                issuesList.innerHTML = '<p>No issues found</p>';
+                return;
+            }
+            
+            issuesList.innerHTML = '';
+            
+            issues.forEach(issue => {
+                const issueElement = document.createElement('div');
+                issueElement.className = 'issue-card';
+                
+                let statusClass = '';
+                switch(issue.status) {
+                    case 'reported': statusClass = 'background:#e74c3c'; break;
+                    case 'acknowledged': statusClass = 'background:#f39c12'; break;
+                    case 'in_progress': statusClass = 'background:#3498db'; break;
+                    case 'resolved': statusClass = 'background:#27ae60'; break;
+                }
+                
+                issueElement.innerHTML = `
+                    <div class="issue-header">
+                        <span class="issue-type" style="background:#3498db;color:white;padding:0.25rem 0.75rem;border-radius:20px;font-size:0.8rem;">
+                            ${issue.issue_type}
+                        </span>
+                        <span class="issue-status" style="${statusClass};color:white;padding:0.25rem 0.75rem;border-radius:20px;font-size:0.8rem;">
+                            ${issue.status}
+                        </span>
+                    </div>
+                    <h3>${issue.title}</h3>
+                    <p>${issue.description || 'No description provided'}</p>
+                    ${issue.image_url ? `<img src="${API_BASE_URL}${issue.image_url}" class="issue-image" alt="Issue photo">` : ''}
+                    <div style="display:flex;justify-content:space-between;color:#7f8c8d;font-size:0.9rem;margin-top:1rem;">
+                        <span>${new Date(issue.created_at).toLocaleDateString()}</span>
+                        <span>${issue.address || 'Location not specified'}</span>
+                    </div>
+                `;
+                
+                issuesList.appendChild(issueElement);
+            });
+        }
+        
+        function loadAdminData() {
+            if (!currentUser || currentUser.role !== 'admin') return;
+            
+            const searchQuery = document.getElementById('admin-search').value;
+            let url = `${API_BASE_URL}/api/issues`;
+            if (searchQuery) url += `?search=${encodeURIComponent(searchQuery)}`;
+            
+            fetch(url)
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('admin-total').textContent = data.total;
+                
+                const resolvedCount = data.issues.filter(issue => issue.status === 'resolved').length;
+                const pendingCount = data.issues.filter(issue => issue.status === 'reported').length;
+                
+                document.getElementById('admin-resolved').textContent = resolvedCount;
+                document.getElementById('admin-pending').textContent = pendingCount;
+                
+                displayAdminIssues(data.issues);
+            })
+            .catch(error => {
+                console.error('Error loading admin data:', error);
+            });
+        }
+        
+        function displayAdminIssues(issues) {
+            const issuesList = document.getElementById('admin-issues-list');
+            
+            if (issues.length === 0) {
+                issuesList.innerHTML = '<p>No issues found</p>';
+                return;
+            }
+            
+            issuesList.innerHTML = '';
+            
+            issues.forEach(issue => {
+                const issueElement = document.createElement('div');
+                issueElement.className = 'issue-card';
+                
+                let statusClass = '';
+                switch(issue.status) {
+                    case 'reported': statusClass = 'background:#e74c3c'; break;
+                    case 'acknowledged': statusClass = 'background:#f39c12'; break;
+                    case 'in_progress': statusClass = 'background:#3498db'; break;
+                    case 'resolved': statusClass = 'background:#27ae60'; break;
+                }
+                
+                issueElement.innerHTML = `
+                    <div class="issue-header">
+                        <span class="issue-type" style="background:#3498db;color:white;padding:0.25rem 0.75rem;border-radius:20px;font-size:0.8rem;">
+                            ${issue.issue_type}
+                        </span>
+                        <span class="issue-status" style="${statusClass};color:white;padding:0.25rem 0.75rem;border-radius:20px;font-size:0.8rem;">
+                            ${issue.status}
+                        </span>
+                    </div>
+                    <h3>${issue.title}</h3>
+                    <p>${issue.description || 'No description provided'}</p>
+                    ${issue.image_url ? `<img src="${API_BASE_URL}${issue.image_url}" class="issue-image" alt="Issue photo">` : ''}
+                    <div style="display:flex;justify-content:space-between;color:#7f8c8d;font-size:0.9rem;margin-top:1rem;">
+                        <span>Reported by: ${issue.reported_by}</span>
+                        <span>${new Date(issue.created_at).toLocaleDateString()}</span>
+                    </div>
+                    <div style="margin-top:1rem;">
+                        <button class="btn btn-success" style="margin-right:0.5rem;" onclick="updateIssueStatus(${issue.id}, 'acknowledged')">Acknowledge</button>
+                        <button class="btn btn-primary" style="margin-right:0.5rem;" onclick="updateIssueStatus(${issue.id}, 'in_progress')">In Progress</button>
+                        <button class="btn btn-secondary" style="margin-right:0.5rem;" onclick="updateIssueStatus(${issue.id}, 'resolved')">Resolve</button>
+                        <button class="btn btn-accent" onclick="deleteIssue(${issue.id})">Remove</button>
+                    </div>
+                `;
+                
+                issuesList.appendChild(issueElement);
+            });
+        }
+        
+        function updateIssueStatus(issueId, status) {
+            fetch(`${API_BASE_URL}/api/issues/${issueId}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    status: status,
+                    user_id: currentUser.id
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    alert(data.error);
+                    return;
+                }
+                
+                alert('Issue status updated successfully');
+                loadAdminData();
+            })
+            .catch(error => {
+                console.error('Error updating issue:', error);
+                alert('Failed to update issue status');
+            });
+        }
+        
+        function deleteIssue(issueId) {
+            if (!confirm('Are you sure you want to remove this issue?')) return;
+            
+            fetch(`${API_BASE_URL}/api/issues/${issueId}`, {
+                method: 'DELETE',
+                headers: {
+                    'Authorization': `Bearer ${currentUser.id}`
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    alert(data.error);
+                    return;
+                }
+                
+                alert('Issue removed successfully');
+                loadAdminData();
+            })
+            .catch(error => {
+                console.error('Error deleting issue:', error);
+                alert('Failed to remove issue');
+            });
+        }
+        
+        // PWA setup
+        function setupPWA() {
+            // Create manifest dynamically
+            const manifest = {
+                "name": "CityWatch Issue Reporter",
+                "short_name": "CityWatch",
+                "description": "Report civic issues with automatic geotagging",
+                "start_url": "/",
+                "display": "standalone",
+                "background_color": "#2c3e50",
+                "theme_color": "#3498db",
+                "orientation": "portrait",
+                "icons": [
+                    {
+                        "src": "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTkyIiBoZWlnaHQ9IjE5MiIgdmlld0JveD0iMCAwIDE5MiAxOTIiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3Qgd2lkdGg9IjE5MiIgaGVpZ2h0PSIxOTIiIHJ4PSI0MCIgZmlsbD0iIzM0OThkQiIvPjxwYXRoIGQ9Ik05NiA1MEM4OC4yODA1IDUwIDgyIDU2LjI4MDUgODIgNjRTODguMjgwNSA3OCA5NiA3OFMxMTAgNzEuNzE5NSAxMTAgNjRTMTAzLjcxOSA1MCA5NiA1MFpNOTYgMTQyQzExOC4wOTEgMTQyIDEzNiAxMjQuMDkxIDEzNiAxMDJIMTU2QzE1NiAxMzAuODQgMTMyLjg0IDE1NCAxMDQgMTU0SDg4QzU5LjE2MCAxNTQgMzYgMTMwLjg0IDM2IDEwMkg1NkM1NiAxMjQuMDkxIDczLjkwOSAxNDIgOTYgMTQyWiIgZmlsbD0id2hpdGUiLz48L3N2Zz4=",
+                        "sizes": "192x192",
+                        "type": "image/svg+xml"
+                    }
+                ]
+            };
+            
+            const manifestBlob = new Blob([JSON.stringify(manifest)], { type: 'application/json' });
+            const manifestURL = URL.createObjectURL(manifestBlob);
+            document.getElementById('app-manifest').href = manifestURL;
+            
+            // Register service worker
+            if ('serviceWorker' in navigator) {
+                navigator.serviceWorker.register('service-worker.js')
+                .then(registration => {
+                    console.log('SW registered: ', registration);
+                })
+                .catch(registrationError => {
+                    console.log('SW registration failed: ', registrationError);
+                });
+            }
+            
+            // Check if launched as PWA
+            if (window.matchMedia('(display-mode: standalone)').matches) {
+                document.body.classList.add('pwa-mode');
+            }
+        }
+        
+        // Utility functions
+        function debounce(func, wait) {
+            let timeout;
+            return function executedFunction(...args) {
+                const later = () => {
+                    clearTimeout(timeout);
+                    func(...args);
+                };
+                clearTimeout(timeout);
+                timeout = setTimeout(later, wait);
+            };
+        }
+        
+        // Global functions for HTML onclick
+        window.viewIssue = function(issueId) {
+            alert('View issue details for ID: ' + issueId);
+            // In a real app, this would show a detailed view
+        };
+        
+        window.updateIssueStatus = updateIssueStatus;
+        window.deleteIssue = deleteIssue;
+    </script>
+</body>
+</html>
